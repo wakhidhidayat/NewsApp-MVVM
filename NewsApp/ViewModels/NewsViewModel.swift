@@ -11,17 +11,24 @@ class NewsViewModel {
     var news = Box([News]())
     var error: Box<Error?> = Box(nil)
     var isLoading = Box(true)
+    var page = 1
+    var totalData = 0
     
     init() {
-        fetchNews()
+        fetchNews(page: page)
     }
     
-    private func fetchNews() {
-        NetworkService.shared.getNews { [weak self] result in
+    func fetchNews(page: Int) {
+        NetworkService.shared.getNews(page: page) { [weak self] result in
             switch result {
             case .success(let newsResult):
-                self?.news.value = newsResult.articles
+                if page > 1 {
+                    self?.news.value.append(contentsOf: newsResult.articles)
+                } else {
+                    self?.news.value = newsResult.articles
+                }
                 self?.isLoading.value = false
+                self?.totalData = newsResult.totalResults
             case .failure(let error):
                 self?.error.value = error
                 self?.isLoading.value = false

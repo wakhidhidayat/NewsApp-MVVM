@@ -13,8 +13,18 @@ class NewsViewController: UIViewController {
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet weak var errorLabel: UILabel!
     
-    private let viewModel = NewsViewModel()
+    private let viewModel: NewsViewModel
     private let sections = [CellType.header, CellType.list]
+    
+    // Mark: Initialization
+    init(viewModel: NewsViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: "NewsViewController", bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,7 +39,7 @@ class NewsViewController: UIViewController {
         
         activityIndicator.startAnimating()
         
-        // binding view model with outlet
+        // Mark: Data Binding
         viewModel.news.bind { [weak self] news in
             self?.newsTable.reloadData()
         }
@@ -118,6 +128,17 @@ extension NewsViewController: UITableViewDelegate {
         case .list:
             myLabel.text = "Trending"
             return headerView
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        switch sections[indexPath.section] {
+        case .header: return
+        case .list:
+            if indexPath.row == viewModel.news.value.count - 2 && viewModel.news.value.count < viewModel.totalData {
+                viewModel.page += 1
+                viewModel.fetchNews(page: viewModel.page)
+            }
         }
     }
 }

@@ -13,8 +13,8 @@ class NetworkService {
     
     private init() { }
     
-    func getNews(completion: @escaping (Result<NewsResult, Error>) -> Void) {
-        AF.request("https://newsapi.org/v2/top-headlines?country=id&apiKey=2169e45c9cec490b9aaed732d6090a7b")
+    func getNews(page: Int, completion: @escaping (Result<NewsResult, Error>) -> Void) {
+        AF.request(Endpoints.getTrending.url, parameters: ApiCall.newsParameters(page: page))
             .validate()
             .responseDecodable(of: NewsResult.self) { response in
                 switch response.result {
