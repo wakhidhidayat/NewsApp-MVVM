@@ -13,6 +13,7 @@ class NewsViewModel {
     var isLoading = Box(true)
     var page = 1
     var totalData = 0
+    var searchText = ""
     
     init() {
         fetchNews(page: page)
@@ -22,18 +23,37 @@ class NewsViewModel {
         NetworkService.shared.getNews(page: page) { [weak self] result in
             switch result {
             case .success(let newsResult):
-                if page > 1 {
-                    self?.news.value.append(contentsOf: newsResult.articles)
-                } else {
-                    self?.news.value = newsResult.articles
-                }
-                self?.isLoading.value = false
-                self?.totalData = newsResult.totalResults
+                self?.successHandler(for: newsResult)
             case .failure(let error):
-                self?.error.value = error
-                self?.isLoading.value = false
-                debugPrint(error)
+                self?.errorHandler(for: error)
             }
         }
+    }
+    
+    func searchNews(page: Int = 1, query: String) {
+        NetworkService.shared.searchNews(page: page, query: query) { [weak self] result in
+            switch result {
+            case .success(let newsResult):
+                self?.successHandler(for: newsResult)
+            case .failure(let error):
+                self?.errorHandler(for: error)
+            }
+        }
+    }
+    
+    private func successHandler(for newsResult: NewsResult) {
+        if page > 1 {
+            news.value.append(contentsOf: newsResult.articles)
+        } else {
+            news.value = newsResult.articles
+        }
+        isLoading.value = false
+        totalData = newsResult.totalResults
+    }
+    
+    private func errorHandler(for error: Error) {
+        self.error.value = error
+        isLoading.value = false
+        debugPrint(error.localizedDescription)
     }
 }

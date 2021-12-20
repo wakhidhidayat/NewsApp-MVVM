@@ -25,4 +25,17 @@ class NetworkService {
                 }
             }
     }
+    
+    func searchNews(page: Int, query: String, completion: @escaping (Result<NewsResult, Error>) -> Void) {
+        AF.request(Endpoints.search.url, parameters: ApiCall.searchParameters(page: page, query: query))
+            .validate()
+            .responseDecodable(of: NewsResult.self) { response in
+                switch response.result {
+                case .success(let newsResult):
+                    completion(.success(newsResult))
+                case .failure(let error):
+                    completion(.failure(error.asAFError!))
+                }
+            }
+    }
 }

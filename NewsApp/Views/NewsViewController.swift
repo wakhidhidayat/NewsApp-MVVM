@@ -15,6 +15,8 @@ class NewsViewController: UIViewController {
     
     private let viewModel: NewsViewModel
     private let sections = [CellType.header, CellType.list]
+    private let searchController = UISearchController(searchResultsController: nil)
+    private var isSearching = false
     
     // Mark: Initialization
     init(viewModel: NewsViewModel) {
@@ -31,6 +33,11 @@ class NewsViewController: UIViewController {
         
         navigationController?.navigationItem.title = "News App"
         errorLabel.isHidden = true
+        
+        searchController.searchBar.delegate = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Topic"
+        navigationItem.searchController = searchController
         
         newsTable.register(ListTableViewCell.nib, forCellReuseIdentifier: ListTableViewCell.identifier)
         newsTable.register(HeaderTableViewCell.nib, forCellReuseIdentifier: HeaderTableViewCell.identifier)
@@ -100,9 +107,9 @@ extension NewsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch sections[section] {
         case .header:
-            return "Breaking News"
-        case .list:
             return "Trending"
+        case .list:
+            return "Top Headlines"
         }
     }
 }
@@ -123,10 +130,10 @@ extension NewsViewController: UITableViewDelegate {
         
         switch section {
         case .header:
-            myLabel.text = "Breaking News"
+            myLabel.text = "Trending"
             return headerView
         case .list:
-            myLabel.text = "Trending"
+            myLabel.text = "Top Headlines"
             return headerView
         }
     }
@@ -137,8 +144,30 @@ extension NewsViewController: UITableViewDelegate {
         case .list:
             if indexPath.row == viewModel.news.value.count - 2 && viewModel.news.value.count < viewModel.totalData {
                 viewModel.page += 1
-                viewModel.fetchNews(page: viewModel.page)
+                if isSearching {
+                    viewModel.searchNews(page: viewModel.page, query: viewModel.searchText)
+                } else {
+                    viewModel.fetchNews(page: viewModel.page)
+                }
+                print("showing \(viewModel.news.value.count) of \(viewModel.totalData)")
+                print("page: \(viewModel.page)")
             }
+        }
+    }
+}
+
+extension NewsViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        activityIndicator.startAnimating()
+        viewModel.searchText = searchText
+        viewModel.page = 1
+        
+        if searchText == "" {
+            isSearching = false
+            viewModel.fetchNews(page: viewModel.page)
+        } else {
+            isSearching = true
+            viewModel.searchNews(query: searchText)
         }
     }
 }

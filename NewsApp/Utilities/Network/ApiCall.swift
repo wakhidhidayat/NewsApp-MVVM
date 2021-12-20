@@ -27,14 +27,25 @@ struct ApiCall {
             "page": page
         ]
     }
+    
+    static func searchParameters(page: Int, query: String) -> [String: Any] {
+        return [
+            "language": "id",
+            "apiKey": ApiCall.apiKey,
+            "page": page,
+            "qInTitle": query
+        ]
+    }
 }
 
 enum Endpoints {
     case getTrending
+    case search
     
     var url: String {
         switch self {
         case .getTrending: return ApiCall.baseUrl + "top-headlines"
+        case .search: return ApiCall.baseUrl + "everything"
         }
     }
 }
