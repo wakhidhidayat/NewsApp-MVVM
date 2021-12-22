@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SafariServices
 
 class NewsViewController: UIViewController {
     
@@ -17,6 +18,7 @@ class NewsViewController: UIViewController {
     private let sections = [CellType.header, CellType.list]
     private let searchController = UISearchController(searchResultsController: nil)
     private var isSearching = false
+    private let refreshControl = UIRefreshControl()
     
     // Mark: Initialization
     init(viewModel: NewsViewModel) {
@@ -34,6 +36,10 @@ class NewsViewController: UIViewController {
         navigationController?.navigationItem.title = "News App"
         errorLabel.isHidden = true
         
+        // Add Refresh Control to Table View
+        newsTable.refreshControl = refreshControl
+        refreshControl.addTarget(self, action: #selector(refreshNewsData(_:)), for: .valueChanged)
+        
         searchController.searchBar.delegate = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search Topic"
@@ -49,6 +55,7 @@ class NewsViewController: UIViewController {
         // Mark: Data Binding
         viewModel.news.bind { [weak self] news in
             self?.newsTable.reloadData()
+            self?.refreshControl.endRefreshing()
         }
         
         viewModel.isLoading.bind { [weak self] isLoading in
@@ -61,8 +68,16 @@ class NewsViewController: UIViewController {
             if let error = error {
                 self?.errorLabel.isHidden = false
                 self?.errorLabel.text = "Oops, Something Went Wrong\nError Code: \(error.asAFError?.responseCode ?? 500)"
+            } else {
+                self?.errorLabel.isHidden = true
             }
         }
+    }
+    
+    @objc private func refreshNewsData(_ sender: Any) {
+        viewModel.fetchNews(page: 1)
+        viewModel.page = 1
+        isSearching = false
     }
 }
 
@@ -117,6 +132,8 @@ extension NewsViewController: UITableViewDataSource {
 extension NewsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        let vc = SFSafariViewController(url: URL(string: viewModel.news.value[indexPath.row].url)!)
+        present(vc, animated: true)
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -149,8 +166,6 @@ extension NewsViewController: UITableViewDelegate {
                 } else {
                     viewModel.fetchNews(page: viewModel.page)
                 }
-                print("showing \(viewModel.news.value.count) of \(viewModel.totalData)")
-                print("page: \(viewModel.page)")
             }
         }
     }

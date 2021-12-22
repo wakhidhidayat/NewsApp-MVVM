@@ -25,7 +25,7 @@ class HeaderTableViewCell: UITableViewCell {
     }
     
     func configure(with news: News) {
-        thumbnailImage.kf.setImage(with: URL(string: news.imageUrl))
+        thumbnailImage.kf.setImage(with: URL(string: news.imageUrl), options: [.transition(.fade(0.2))])
         publishedDateLabel.text = news.publishedAt.toDate()?.timeAgoDisplay()
         titleLabel.text = news.title
         sourceLabel.text = news.source.name
